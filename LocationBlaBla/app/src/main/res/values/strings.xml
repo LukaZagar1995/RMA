@@ -33,8 +33,13 @@
 	<string name="nav_username_text">Username</string>
     <string name="nav_email_text">Email address</string>
     <string name="nav_profile_desc">Profile image</string>
-    
+
     <string name="nav_drawer_open">Open navigation drawer</string>
     <string name="nav_drawer_close">Close navigation drawer</string>
+	<string name="et_chat_message_hint">Type a message…</string>
+
+    <string name="send_message_error">You can\'t send empty message!</string>
+    <string name="tv_chat_left_text">Receiver Message</string>
+    <string name="tv_chat_right_text">Sender Message</string>
 
 </resources>

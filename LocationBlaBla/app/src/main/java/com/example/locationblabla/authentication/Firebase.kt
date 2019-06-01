@@ -17,7 +17,7 @@ import com.google.firebase.database.DatabaseReference
 class Firebase {
 
     companion object{
-       val USER_EMAIL = "user_email"
+       const val USER_EMAIL = "user_email"
     }
 
     private var firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()

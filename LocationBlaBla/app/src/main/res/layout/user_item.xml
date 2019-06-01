@@ -14,12 +14,10 @@
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:id="@+id/tv_uItem_username"
-			android:layout_toRightOf="@id/item_profile_image"
 			android:layout_toEndOf="@id/item_profile_image"
-			android:layout_marginStart="10dp"
+			android:layout_marginStart="8dp"
+			android:layout_marginTop="13dp"
 			android:textSize="12sp"
-			android:layout_centerVertical="true"
-
 			android:text="@string/nav_username_text"/>
 
 </RelativeLayout>
