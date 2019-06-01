@@ -26,4 +26,15 @@
     <string name="btn_login_text">Login</string>
     <string name="login_error">Authentication failed!</string>
 
+    <string name="menu_logout_text">Logout</string>
+    <string name="nav_users_text">Users</string>
+    <string name="nav_chat_text">Chat</string>
+    <string name="nav_profile_text">Profile</string>
+	<string name="nav_username_text">Username</string>
+    <string name="nav_email_text">Email address</string>
+    <string name="nav_profile_desc">Profile image</string>
+    
+    <string name="nav_drawer_open">Open navigation drawer</string>
+    <string name="nav_drawer_close">Close navigation drawer</string>
+
 </resources>

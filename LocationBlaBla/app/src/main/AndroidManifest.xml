@@ -11,8 +11,6 @@
             android:theme="@style/AppTheme">
         <activity android:name=".activity.MainActivity">
         </activity>
-        <activity android:name=".activity.WelcomeActivity">
-        </activity>
         <activity
                 android:name=".activity.authentication.RegisterActivity"
                 android:parentActivityName=".activity.StartActivity"/>

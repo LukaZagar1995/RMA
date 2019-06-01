@@ -8,12 +8,17 @@ import android.content.Intent
 import com.example.locationblabla.Constants.DB_USERS
 import com.example.locationblabla.R
 import com.example.locationblabla.activity.MainActivity
+import com.example.locationblabla.activity.authentication.LoginActivity
 import com.example.locationblabla.model.User
 import com.google.firebase.database.DatabaseReference
 
 
 @Suppress("NAME_SHADOWING")
 class Firebase {
+
+    companion object{
+       val USER_EMAIL = "user_email"
+    }
 
     private var firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
     private lateinit var db: DatabaseReference
@@ -31,13 +36,15 @@ class Firebase {
                     val hashMap = HashMap<String, String>()
                     hashMap["id"] = userID
                     hashMap["username"] = user.username
-                    hashMap["imageURL"] = user.profileImage
+                    hashMap["email"] = user.email
+                    hashMap["profileImage"] = user.profileImage
 
                     db.setValue(hashMap).addOnCompleteListener { task ->
                         if (task.isSuccessful) {
                             firebaseAuth.currentUser?.sendEmailVerification()?.addOnCompleteListener{ task ->
                                     if (task.isSuccessful){
-                                    val intent = Intent(context, MainActivity::class.java)
+                                    val intent = Intent(context, LoginActivity::class.java)
+                                        intent.putExtra(USER_EMAIL, user.email)
                                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
                                     context.startActivity(intent)
                                 }else {
