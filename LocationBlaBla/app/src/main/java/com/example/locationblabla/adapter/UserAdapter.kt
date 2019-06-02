@@ -10,13 +10,20 @@ import com.example.locationblabla.Constants.USER_DEFAULT_IMAGE
 import com.example.locationblabla.R
 import com.example.locationblabla.model.User
 import android.content.Intent
+import com.example.locationblabla.Constants.DB_CHATS
 import com.example.locationblabla.Constants.USER_ONLINE_STATUS
 import com.example.locationblabla.activity.ChatActivity
+import com.example.locationblabla.model.Chat
 import com.example.locationblabla.module.GlideApp
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 
 
-class UserAdapter(private val mContext: Context?, private val mUsers: List<User>, private val isChat: Boolean) :
+class UserAdapter(private val mContext: Context?, private val mUsers: ArrayList<User>, private val isChat: Boolean) :
     RecyclerView.Adapter<ViewHolder>() {
 
     companion object {
@@ -41,6 +48,12 @@ class UserAdapter(private val mContext: Context?, private val mUsers: List<User>
             }
         }
 
+        if(isChat){
+            setLastMessage(user.id, holder.lastMessage )
+        } else {
+            holder.lastMessage.visibility = View.GONE
+        }
+
         if (isChat) {
             if (user.status == USER_ONLINE_STATUS) {
                 holder.onlineImage.visibility = View.VISIBLE
@@ -49,7 +62,7 @@ class UserAdapter(private val mContext: Context?, private val mUsers: List<User>
                 holder.onlineImage.visibility = View.GONE
                 holder.offlineImage.visibility = View.VISIBLE
             }
-        }else {
+        } else {
             holder.onlineImage.visibility = View.GONE
             holder.offlineImage.visibility = View.GONE
         }
@@ -71,8 +84,42 @@ class UserAdapter(private val mContext: Context?, private val mUsers: List<User>
         var profileImage: ImageView = itemView.findViewById(R.id.item_profile_image)
         var onlineImage: ImageView = itemView.findViewById(R.id.item_online_image)
         var offlineImage: ImageView = itemView.findViewById(R.id.item_offline_image)
+        var lastMessage: TextView = itemView.findViewById(R.id.tv_uItem_lastMessage)
 
+    }
 
+    private fun setLastMessage(userID: String, lastMessage: TextView) {
+        var theLastMessage = "default"
+        val firebaseUser = FirebaseAuth.getInstance().currentUser
+        val db = FirebaseDatabase.getInstance().getReference(DB_CHATS)
+        db.addValueEventListener(object : ValueEventListener {
+
+            override fun onCancelled(p0: DatabaseError) {
+
+            }
+
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                for (snapshot in dataSnapshot.children) {
+                    val chat = snapshot.getValue(Chat::class.java)
+                    if (chat != null) {
+                        if (firebaseUser != null) {
+                            if (chat.receiver == firebaseUser.uid && chat.sender == userID ||
+                                chat.receiver == userID && chat.sender == firebaseUser.uid) {
+                                theLastMessage = chat.message
+                            }
+                        }
+                    }
+                }
+                when(theLastMessage){
+                    "default" ->
+                        lastMessage.text = "No messages"
+                    else ->
+                        lastMessage.text = theLastMessage
+                }
+                theLastMessage = "default"
+
+            }
+        })
     }
 
 }

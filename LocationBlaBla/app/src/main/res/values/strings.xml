@@ -47,5 +47,15 @@
     <string name="upload_image_status">Uploading</string>
     <string name="upload_image_error">Failed!</string>
     <string name="upload_image_info">Upload in progress</string>
+	<string name="tv_item_seen_text">Seen</string>
+	<string name="tv_item_delivered_text">Delivered</string>
+	<string name="ask_for_permission_test">Permission needed</string>
+    <string name="permission_read_external_storage">This permission is needed for updating your profile picture!
+    </string>
+    <string name="permission_accept_btn_txt">Ok</string>
+    <string name="permission_denied_btn_tex">Cancel</string>
+    <string name="premission_granted_text">Permission GRANTED</string>
+    <string name="permission_denied">Permission DENIED</string>
+	<string name="last_message_empty">No messages</string>
 
 </resources>

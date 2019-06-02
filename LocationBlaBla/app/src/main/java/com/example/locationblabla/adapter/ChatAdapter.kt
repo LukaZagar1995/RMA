@@ -45,6 +45,16 @@ class ChatAdapter(private val mContext: Context?, private val mChat: List<Chat>,
             }
         }
 
+        if(position == mChat.size - 1){
+            if (chat.isseen){
+                holder.seenMessage.setText(R.string.tv_item_seen_text)
+            } else {
+                holder.seenMessage.setText(R.string.tv_item_delivered_text)
+            }
+        } else {
+            holder.seenMessage.visibility = View.GONE
+        }
+
     }
 
     override fun getItemCount(): Int {
@@ -55,6 +65,7 @@ class ChatAdapter(private val mContext: Context?, private val mChat: List<Chat>,
 
         var showMessage: TextView = itemView.findViewById(R.id.tv_chat_MessageItem)
         var profileImage: ImageView = itemView.findViewById(R.id.civ_profile_chat_Item)
+        var seenMessage: TextView = itemView.findViewById(R.id.tv_txt_seen)
 
     }
 

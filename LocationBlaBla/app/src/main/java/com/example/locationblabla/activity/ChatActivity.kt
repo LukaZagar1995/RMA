@@ -8,6 +8,7 @@ import android.support.v7.widget.LinearLayoutManager
 import android.widget.Toast
 import com.example.locationblabla.Constants
 import com.example.locationblabla.Constants.DB_CHATS
+import com.example.locationblabla.Constants.DB_CHAT_LIST
 import com.example.locationblabla.Constants.DB_USERS
 import com.example.locationblabla.R
 import com.example.locationblabla.adapter.ChatAdapter
@@ -23,19 +24,20 @@ import com.google.firebase.storage.FirebaseStorage
 import kotlinx.android.synthetic.main.activity_chat.*
 
 
-
 class ChatActivity : AppCompatActivity() {
 
     private val firebaseUser = FirebaseAuth.getInstance().currentUser
+    lateinit var seenListener: ValueEventListener
+    private val databaseReference = FirebaseDatabase.getInstance().getReference(DB_CHATS)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
         setupUI(intent)
 
-        btn_chat_send.setOnClickListener{
+        btn_chat_send.setOnClickListener {
 
-            if(et_chat_message.text.isNotEmpty()){
+            if (et_chat_message.text.isNotEmpty()) {
                 sendMessage(firebaseUser!!.uid, intent.getStringExtra(USER_ID), et_chat_message.text.toString())
             } else {
                 Toast.makeText(
@@ -48,6 +50,8 @@ class ChatActivity : AppCompatActivity() {
             et_chat_message.setText("")
 
         }
+
+        seenMessage(intent.getStringExtra(USER_ID))
 
     }
 
@@ -71,13 +75,15 @@ class ChatActivity : AppCompatActivity() {
 
         db.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
-               val user: User? = dataSnapshot.getValue(User::class.java)
+                val user: User? = dataSnapshot.getValue(User::class.java)
                 tv_chat_username.text = user?.username
 
                 if (user!!.profileImage == Constants.USER_DEFAULT_IMAGE) {
                     civ_chat_profile.setImageResource(R.mipmap.ic_launcher)
                 } else {
-                    GlideApp.with(applicationContext).load(FirebaseStorage.getInstance().getReferenceFromUrl(user.profileImage)).into(civ_chat_profile)
+                    GlideApp.with(applicationContext)
+                        .load(FirebaseStorage.getInstance().getReferenceFromUrl(user.profileImage))
+                        .into(civ_chat_profile)
                 }
                 readMessages(firebaseUser!!.uid, chatPartnerID, user.profileImage)
             }
@@ -89,7 +95,32 @@ class ChatActivity : AppCompatActivity() {
 
     }
 
-    private fun sendMessage(sender:String, receiver:String, message:String){
+    private fun seenMessage(userID: String) {
+
+        seenListener = databaseReference.addValueEventListener(object : ValueEventListener {
+            override fun onCancelled(p0: DatabaseError) {
+
+            }
+
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                for (snapshot in dataSnapshot.children) {
+                    val chat: Chat? = snapshot.getValue(Chat::class.java)
+                    if (chat != null) {
+                        if (firebaseUser != null) {
+                            if (chat.receiver == firebaseUser.uid && chat.sender == userID) {
+                                    val hashMap = HashMap<String, Any>()
+                                    hashMap["isseen"] = true
+                                snapshot.ref.updateChildren(hashMap)
+                            }
+                        }
+                    }
+                }
+            }
+
+        })
+    }
+
+    private fun sendMessage(sender: String, receiver: String, message: String) {
 
         val db = FirebaseDatabase.getInstance().reference
 
@@ -97,12 +128,32 @@ class ChatActivity : AppCompatActivity() {
         hashMap["sender"] = sender
         hashMap["receiver"] = receiver
         hashMap["message"] = message
+        hashMap["isSeen"] = false
+
+        val userID =intent.getStringExtra(USER_ID)
 
         db.child(DB_CHATS).push().setValue(hashMap)
 
+        val chatRef = FirebaseDatabase.getInstance().getReference(DB_CHAT_LIST)
+            .child(firebaseUser!!.uid)
+            .child(userID)
+
+        chatRef.addListenerForSingleValueEvent(object: ValueEventListener{
+            override fun onCancelled(p0: DatabaseError) {
+
+            }
+
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                if(!dataSnapshot.exists()){
+                    chatRef.child("id").setValue(userID)
+                }
+            }
+
+        })
+
     }
 
-    private fun readMessages(senderId:String, receiverId: String, profileImage:String){
+    private fun readMessages(senderId: String, receiverId: String, profileImage: String) {
 
         val mChat = ArrayList<Chat>()
 
@@ -115,7 +166,8 @@ class ChatActivity : AppCompatActivity() {
 
                     assert(firebaseUser != null)
                     if (chat.receiver == senderId && chat.sender == receiverId ||
-                    chat.receiver == receiverId && chat.sender == senderId) {
+                        chat.receiver == receiverId && chat.sender == senderId
+                    ) {
                         mChat.add(chat)
                     }
                 }
@@ -130,8 +182,9 @@ class ChatActivity : AppCompatActivity() {
         })
     }
 
-    private fun status(status:String){
-        val db = FirebaseDatabase.getInstance().getReference(DB_USERS).child(FirebaseAuth.getInstance().currentUser!!.uid)
+    private fun status(status: String) {
+        val db =
+            FirebaseDatabase.getInstance().getReference(DB_USERS).child(FirebaseAuth.getInstance().currentUser!!.uid)
 
         val hashMap = HashMap<String, Any>()
         hashMap["status"] = status
@@ -146,6 +199,7 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
+        databaseReference.removeEventListener(seenListener)
         status(Constants.USER_OFFLINE_STATUS)
     }
 }

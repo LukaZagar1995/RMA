@@ -7,12 +7,12 @@ import android.support.v7.widget.RecyclerView
 import android.view.ViewGroup
 import android.view.LayoutInflater
 import android.view.View
-import com.example.locationblabla.Constants.DB_CHATS
 import com.example.locationblabla.Constants.DB_USERS
 import com.example.locationblabla.R
-import com.example.locationblabla.model.Chat
 import com.example.locationblabla.model.User
 import UserAdapter
+import com.example.locationblabla.Constants.DB_CHAT_LIST
+import com.example.locationblabla.model.Chatlist
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -22,7 +22,8 @@ import com.google.firebase.database.ValueEventListener
 class ChatFragment : Fragment() {
 
     val firebaseUser = FirebaseAuth.getInstance().currentUser
-    val usersList = ArrayList<Any>()
+    val usersList = ArrayList<User>()
+    val userChatList = ArrayList<Chatlist>()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
@@ -32,7 +33,29 @@ class ChatFragment : Fragment() {
         recyclerView.setHasFixedSize(true)
         recyclerView.layoutManager = LinearLayoutManager(context)
 
-        val db = FirebaseDatabase.getInstance().getReference(DB_CHATS)
+        val db = FirebaseDatabase.getInstance().getReference(DB_CHAT_LIST).child(firebaseUser!!.uid)
+        db.addValueEventListener(object : ValueEventListener {
+
+            override fun onCancelled(p0: DatabaseError) {
+
+            }
+
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                for (snapshot in dataSnapshot.children){
+                    val chatList = snapshot.getValue(Chatlist::class.java)
+                    if (chatList != null) {
+                        userChatList.add(chatList)
+                    }
+                }
+                setChatList(recyclerView)
+            }
+        })
+        return view
+    }
+
+    private fun setChatList(recyclerView: RecyclerView) {
+
+        val db = FirebaseDatabase.getInstance().getReference(DB_USERS)
         db.addValueEventListener(object : ValueEventListener {
 
             override fun onCancelled(p0: DatabaseError) {
@@ -41,58 +64,22 @@ class ChatFragment : Fragment() {
 
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 usersList.clear()
-                for (snapshot in dataSnapshot.children) {
-                    val chat = snapshot.getValue(Chat::class.java)!!
-
-                    assert(firebaseUser != null)
-                    if (chat.sender == firebaseUser!!.uid) {
-                        usersList.add(chat.receiver)
-                    }
-                    if (chat.receiver == firebaseUser.uid) {
-                        usersList.add(chat.sender)
-                    }
-                }
-                readChats(recyclerView)
-            }
-        })
-        return view
-    }
-
-    private fun readChats(recyclerView: RecyclerView) {
-
-        val mUsers = ArrayList<User>()
-        val db = FirebaseDatabase.getInstance().getReference(DB_USERS)
-
-        db.addValueEventListener(object : ValueEventListener {
-
-            override fun onCancelled(p0: DatabaseError) {
-
-            }
-
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                mUsers.clear()
-                for (snapshot in dataSnapshot.children) {
-                    val user = snapshot.getValue(User::class.java)!!
-                    for (id in usersList) {
-                        if (user.id == id) {
-                            if (mUsers.size != 0) {
-                                for (user1 in mUsers) {
-                                    if (user.id != user1.id) {
-                                        mUsers.add(user)
-                                    }
-                                }
-                            } else {
-                                mUsers.add(user)
+                for (snapshot in dataSnapshot.children){
+                    val user = snapshot.getValue(User::class.java)
+                        for(chatlist: Chatlist in userChatList){
+                            if (user!!.id == chatlist.id){
+                                usersList.add(user)
                             }
                         }
                     }
-                }
-
-               val userAdapter = UserAdapter(context, mUsers, true)
+                val userAdapter = UserAdapter(context, usersList, true)
                 recyclerView.adapter = userAdapter
-            }
 
+
+                }
         })
 
     }
+
+
 }

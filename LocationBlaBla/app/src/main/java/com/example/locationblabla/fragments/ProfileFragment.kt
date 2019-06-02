@@ -3,6 +3,7 @@ package com.example.locationblabla.fragments
 import android.app.Activity.RESULT_OK
 import android.app.ProgressDialog
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.support.v4.app.Fragment
@@ -24,6 +25,7 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import android.widget.Toast
 import com.example.locationblabla.Constants.IMAGE_LOCATION
+import com.example.locationblabla.activity.MainActivity.Companion.PERMISSION
 import com.example.locationblabla.module.GlideApp
 import com.google.android.gms.tasks.Task
 import com.google.firebase.storage.UploadTask
@@ -36,7 +38,9 @@ class ProfileFragment : Fragment() {
 
     companion object {
         const val IMAGE_REQUEST = 1
+
     }
+
     private var storageTask: UploadTask? = null
     private lateinit var imageUri: Uri
     private val userID: String? = FirebaseAuth.getInstance().uid
@@ -51,6 +55,8 @@ class ProfileFragment : Fragment() {
         val civFrgProfileImage: CircleImageView = view.findViewById(R.id.civ_frg_profile_image)
         val tvFrgProfileUsername: TextView = view.findViewById(R.id.tv_frg_profile_username)
 
+        val permission = arguments?.get(PERMISSION)
+
         db.addValueEventListener(object : ValueEventListener {
             override fun onCancelled(p0: DatabaseError) {
 
@@ -63,14 +69,19 @@ class ProfileFragment : Fragment() {
                     if (user.profileImage == USER_DEFAULT_IMAGE) {
                         civFrgProfileImage.setImageResource(R.mipmap.ic_launcher)
                     } else {
-                        context?.let { GlideApp.with(it).load(imageReference.getReferenceFromUrl(user.profileImage)).into(civFrgProfileImage) }
+                        context?.let {
+                            GlideApp.with(it).load(imageReference.getReferenceFromUrl(user.profileImage))
+                                .into(civFrgProfileImage)
+                        }
                     }
                 }
             }
         })
-
+        if (permission == true){
         civFrgProfileImage.setOnClickListener {
-            openImage()
+
+                openImage()
+            }
         }
 
         return view
@@ -99,10 +110,11 @@ class ProfileFragment : Fragment() {
         if (imageUri != null) {
             val map = HashMap<String, Any>()
             val imageReference = storage.child(
-                userID + Calendar.getInstance().time + "." +getFileExtension(imageUri)
+                userID + Calendar.getInstance().time + "." + getFileExtension(imageUri)
             )
-            map["profileImage"] = IMAGE_LOCATION + userID + Calendar.getInstance().time + "." +getFileExtension(imageUri)
-            storageTask  = imageReference.putFile(imageUri)
+            map["profileImage"] =
+                IMAGE_LOCATION + userID + Calendar.getInstance().time + "." + getFileExtension(imageUri)
+            storageTask = imageReference.putFile(imageUri)
 
 
             storageTask!!.continueWith {
@@ -112,7 +124,7 @@ class ProfileFragment : Fragment() {
                     }
                     imageReference.downloadUrl
                 }
-            }.addOnCompleteListener{ task ->
+            }.addOnCompleteListener { task ->
                 if (task.isSuccessful) {
 
                     val firebaseUser = FirebaseAuth.getInstance().currentUser
@@ -132,7 +144,6 @@ class ProfileFragment : Fragment() {
             }
         }
     }
-
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
