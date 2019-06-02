@@ -10,7 +10,9 @@ import android.widget.TextView
 import com.example.locationblabla.Constants.USER_DEFAULT_IMAGE
 import com.example.locationblabla.R
 import com.example.locationblabla.model.Chat
+import com.example.locationblabla.module.GlideApp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.storage.FirebaseStorage
 
 class ChatAdapter(private val mContext: Context?, private val mChat: List<Chat>, private val profileURL: String) :
     RecyclerView.Adapter<ChatAdapter.ViewHolder>() {
@@ -38,7 +40,9 @@ class ChatAdapter(private val mContext: Context?, private val mChat: List<Chat>,
         if (profileURL == USER_DEFAULT_IMAGE) {
             holder.profileImage.setImageResource(R.mipmap.ic_launcher)
         } else {
-
+            if (mContext != null) {
+                GlideApp.with(mContext).load(FirebaseStorage.getInstance().getReferenceFromUrl(profileURL)).into(holder.profileImage)
+            }
         }
 
     }

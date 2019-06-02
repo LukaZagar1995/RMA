@@ -23,6 +23,8 @@ import com.google.firebase.database.ValueEventListener
 
 class UsersFragment : Fragment() {
 
+    private val mUsers = ArrayList<User>()
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
         val view = inflater.inflate(R.layout.fragment_users, container, false)
@@ -31,9 +33,7 @@ class UsersFragment : Fragment() {
         recyclerView.setHasFixedSize(true)
         recyclerView.layoutManager = LinearLayoutManager(context)
 
-        val mUsers = ArrayList<User>()
-
-        getAllUsersExceptCurrent(mUsers,context,recyclerView)
+        getAllUsersExceptCurrent(mUsers, context, recyclerView)
 
         return view
     }
@@ -50,12 +50,12 @@ class UsersFragment : Fragment() {
                     val user = snapshot.getValue(User::class.java)!!
 
                     assert(firebaseUser != null)
-                    if (user.id != firebaseUser!!.uid) {
+                    if (user.id != firebaseUser!!.uid ) {
                         mUsers.add(user)
                     }
                 }
 
-               val userAdapter = UserAdapter(context, mUsers)
+               val userAdapter = UserAdapter(context, mUsers, false)
                 recyclerView.adapter = userAdapter
             }
 

@@ -38,6 +38,7 @@ class Firebase {
                     hashMap["username"] = user.username
                     hashMap["email"] = user.email
                     hashMap["profileImage"] = user.profileImage
+                    hashMap["status"] = "offline"
 
                     db.setValue(hashMap).addOnCompleteListener { task ->
                         if (task.isSuccessful) {

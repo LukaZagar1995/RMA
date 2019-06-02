@@ -5,7 +5,6 @@ import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v7.widget.LinearLayoutManager
-import android.widget.LinearLayout
 import android.widget.Toast
 import com.example.locationblabla.Constants
 import com.example.locationblabla.Constants.DB_CHATS
@@ -14,12 +13,16 @@ import com.example.locationblabla.R
 import com.example.locationblabla.adapter.ChatAdapter
 import com.example.locationblabla.model.Chat
 import com.example.locationblabla.model.User
+import com.example.locationblabla.module.GlideApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.android.synthetic.main.activity_chat.*
+
+
 
 class ChatActivity : AppCompatActivity() {
 
@@ -74,9 +77,9 @@ class ChatActivity : AppCompatActivity() {
                 if (user!!.profileImage == Constants.USER_DEFAULT_IMAGE) {
                     civ_chat_profile.setImageResource(R.mipmap.ic_launcher)
                 } else {
-                    //Glide.with(mContext).load(user.getImageURL()).into(holder.profileImage)
+                    GlideApp.with(applicationContext).load(FirebaseStorage.getInstance().getReferenceFromUrl(user.profileImage)).into(civ_chat_profile)
                 }
-                readMesages(firebaseUser!!.uid, chatPartnerID, user.profileImage)
+                readMessages(firebaseUser!!.uid, chatPartnerID, user.profileImage)
             }
 
             override fun onCancelled(databaseError: DatabaseError) {
@@ -99,7 +102,7 @@ class ChatActivity : AppCompatActivity() {
 
     }
 
-    private fun readMesages(senderId:String, receiverId: String, profileImage:String){
+    private fun readMessages(senderId:String, receiverId: String, profileImage:String){
 
         val mChat = ArrayList<Chat>()
 
@@ -126,4 +129,24 @@ class ChatActivity : AppCompatActivity() {
             }
         })
     }
+
+    private fun status(status:String){
+        val db = FirebaseDatabase.getInstance().getReference(DB_USERS).child(FirebaseAuth.getInstance().currentUser!!.uid)
+
+        val hashMap = HashMap<String, Any>()
+        hashMap["status"] = status
+        db.updateChildren(hashMap)
+
+    }
+
+    override fun onResume() {
+        super.onResume()
+        status(Constants.USER_ONLINE_STATUS)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        status(Constants.USER_OFFLINE_STATUS)
+    }
 }
+

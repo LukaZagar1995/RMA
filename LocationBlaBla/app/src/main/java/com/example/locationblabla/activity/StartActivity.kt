@@ -13,7 +13,7 @@ class StartActivity : AppCompatActivity() {
 
     override fun onStart() {
 
-        if (FirebaseAuth.getInstance().currentUser != null) {
+        if (FirebaseAuth.getInstance().currentUser != null && FirebaseAuth.getInstance().currentUser!!.isEmailVerified ) {
             startActivity(Intent (this, MainActivity::class.java))
             finish()
         }
@@ -29,11 +29,13 @@ class StartActivity : AppCompatActivity() {
         btn_start_login.setOnClickListener {
             val intent = Intent(this, LoginActivity::class.java)
             startActivity(intent)
+            finish()
         }
 
         btn_start_register.setOnClickListener {
             val intent = Intent(this, RegisterActivity::class.java)
             startActivity(intent)
+            finish()
         }
 
     }

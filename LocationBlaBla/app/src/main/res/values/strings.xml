@@ -41,5 +41,11 @@
     <string name="send_message_error">You can\'t send empty message!</string>
     <string name="tv_chat_left_text">Receiver Message</string>
     <string name="tv_chat_right_text">Sender Message</string>
+	<string name="tv_frg_profile_text">Profile</string>
+    <string name="tv_frg_profile_username_text">username</string>
+
+    <string name="upload_image_status">Uploading</string>
+    <string name="upload_image_error">Failed!</string>
+    <string name="upload_image_info">Upload in progress</string>
 
 </resources>

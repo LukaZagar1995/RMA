@@ -1,4 +1,3 @@
-
 import UserAdapter.ViewHolder
 import android.content.Context
 import android.support.v7.widget.RecyclerView
@@ -11,10 +10,13 @@ import com.example.locationblabla.Constants.USER_DEFAULT_IMAGE
 import com.example.locationblabla.R
 import com.example.locationblabla.model.User
 import android.content.Intent
+import com.example.locationblabla.Constants.USER_ONLINE_STATUS
 import com.example.locationblabla.activity.ChatActivity
+import com.example.locationblabla.module.GlideApp
+import com.google.firebase.storage.FirebaseStorage
 
 
-class UserAdapter(private val mContext: Context?, private val mUsers: List<User>) :
+class UserAdapter(private val mContext: Context?, private val mUsers: List<User>, private val isChat: Boolean) :
     RecyclerView.Adapter<ViewHolder>() {
 
     companion object {
@@ -33,7 +35,23 @@ class UserAdapter(private val mContext: Context?, private val mUsers: List<User>
         if (user.profileImage == USER_DEFAULT_IMAGE) {
             holder.profileImage.setImageResource(R.mipmap.ic_launcher)
         } else {
-            //Glide.with(mContext).load(user.getImageURL()).into(holder.profileImage)
+            if (mContext != null) {
+                GlideApp.with(mContext).load(FirebaseStorage.getInstance().getReferenceFromUrl(user.profileImage))
+                    .into(holder.profileImage)
+            }
+        }
+
+        if (isChat) {
+            if (user.status == USER_ONLINE_STATUS) {
+                holder.onlineImage.visibility = View.VISIBLE
+                holder.offlineImage.visibility = View.GONE
+            } else {
+                holder.onlineImage.visibility = View.GONE
+                holder.offlineImage.visibility = View.VISIBLE
+            }
+        }else {
+            holder.onlineImage.visibility = View.GONE
+            holder.offlineImage.visibility = View.GONE
         }
 
         holder.itemView.setOnClickListener {
@@ -51,6 +69,8 @@ class UserAdapter(private val mContext: Context?, private val mUsers: List<User>
 
         var username: TextView = itemView.findViewById(R.id.tv_uItem_username)
         var profileImage: ImageView = itemView.findViewById(R.id.item_profile_image)
+        var onlineImage: ImageView = itemView.findViewById(R.id.item_online_image)
+        var offlineImage: ImageView = itemView.findViewById(R.id.item_offline_image)
 
 
     }
