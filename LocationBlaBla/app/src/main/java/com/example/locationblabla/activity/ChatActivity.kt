@@ -9,12 +9,15 @@ import android.widget.Toast
 import com.example.locationblabla.Constants
 import com.example.locationblabla.Constants.DB_CHATS
 import com.example.locationblabla.Constants.DB_CHAT_LIST
+import com.example.locationblabla.Constants.DB_TOKEN
 import com.example.locationblabla.Constants.DB_USERS
 import com.example.locationblabla.R
 import com.example.locationblabla.adapter.ChatAdapter
+import com.example.locationblabla.fragments.APIService
 import com.example.locationblabla.model.Chat
 import com.example.locationblabla.model.User
 import com.example.locationblabla.module.GlideApp
+import com.example.locationblabla.notifications.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -22,12 +25,16 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.android.synthetic.main.activity_chat.*
+import retrofit2.Call
+import retrofit2.Callback
 
 
 class ChatActivity : AppCompatActivity() {
 
     private val firebaseUser = FirebaseAuth.getInstance().currentUser
     lateinit var seenListener: ValueEventListener
+    private var notify = false
+    private val apiService = Client().getClient("https://fcm.googleapis.com/")?.create(APIService::class.java)
     private val databaseReference = FirebaseDatabase.getInstance().getReference(DB_CHATS)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,7 +43,7 @@ class ChatActivity : AppCompatActivity() {
         setupUI(intent)
 
         btn_chat_send.setOnClickListener {
-
+            notify = true
             if (et_chat_message.text.isNotEmpty()) {
                 sendMessage(firebaseUser!!.uid, intent.getStringExtra(USER_ID), et_chat_message.text.toString())
             } else {
@@ -151,6 +158,26 @@ class ChatActivity : AppCompatActivity() {
 
         })
 
+
+        val messageText = ""
+        val userRef = FirebaseDatabase.getInstance().getReference(DB_USERS).child(firebaseUser!!.uid)
+        userRef.addValueEventListener(object : ValueEventListener{
+            override fun onCancelled(p0: DatabaseError) {
+            }
+
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                val user: User? = dataSnapshot.getValue(User::class.java)
+                if (user != null) {
+                    if(notify) {
+                        sendNotification(receiver,user.username, messageText)
+                    }
+                    notify = false
+                }
+            }
+
+        })
+
+
     }
 
     private fun readMessages(senderId: String, receiverId: String, profileImage: String) {
@@ -179,6 +206,41 @@ class ChatActivity : AppCompatActivity() {
             override fun onCancelled(databaseError: DatabaseError) {
 
             }
+        })
+    }
+
+    private fun sendNotification(receiver: String, username: String, message: String) {
+        val tokensReference = FirebaseDatabase.getInstance().getReference(DB_TOKEN)
+        val query = tokensReference.orderByKey().equalTo(receiver)
+        val userID = intent.getStringExtra(USER_ID)
+        query.addValueEventListener(object : ValueEventListener{
+            override fun onCancelled(p0: DatabaseError) {
+            }
+
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                for (snapshot in dataSnapshot.children){
+                    val token = snapshot.getValue(Token::class.java)
+                    val data = Data(firebaseUser!!.uid, R.mipmap.ic_launcher, "$username: $message",
+                        userID)
+
+                    val sender = Sender(data, token!!.token)
+
+                    apiService?.sendNotification(sender)?.enqueue(object : Callback<Response>{
+                        override fun onFailure(call: Call<Response>, t: Throwable) {
+                        }
+
+                        override fun onResponse(call: Call<Response>, response: retrofit2.Response<Response>) {
+                            if (response.code() == 200){
+                                if (response.body()!!.success != 1){
+                                    Toast.makeText(this@ChatActivity, "Failed", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+
+                    })
+                }
+            }
+
         })
     }
 

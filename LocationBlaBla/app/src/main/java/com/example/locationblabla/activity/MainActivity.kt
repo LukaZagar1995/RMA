@@ -2,6 +2,7 @@ package com.example.locationblabla.activity
 
 import android.Manifest
 import android.app.AlertDialog
+import android.content.Context
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.view.MenuItem
@@ -10,6 +11,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.android.synthetic.main.activity_main.*
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.support.design.widget.NavigationView
 import android.support.v4.app.ActivityCompat
@@ -18,6 +20,7 @@ import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v4.view.GravityCompat
 import android.view.View
 import android.widget.TextView
+import com.example.locationblabla.Constants.DB_CHATS
 import com.example.locationblabla.Constants.USER_DEFAULT_IMAGE
 import com.example.locationblabla.Constants.USER_OFFLINE_STATUS
 import com.example.locationblabla.Constants.USER_ONLINE_STATUS
@@ -29,6 +32,7 @@ import com.google.firebase.database.ValueEventListener
 import com.example.locationblabla.fragments.ProfileFragment
 import com.example.locationblabla.fragments.ChatFragment
 import com.example.locationblabla.fragments.UsersFragment
+import com.example.locationblabla.model.Chat
 import com.example.locationblabla.module.GlideApp
 import com.google.firebase.storage.FirebaseStorage
 import de.hdodenhof.circleimageview.CircleImageView
@@ -41,7 +45,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         const val STORAGE_PERMISSION_CODE = 1
     }
 
-    val firebaseUser = FirebaseAuth.getInstance().currentUser
+    private val firebaseUser = FirebaseAuth.getInstance().currentUser
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,6 +76,35 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val navView: NavigationView = findViewById(R.id.nav_view)
         setTv(navView.getHeaderView(0))
 
+
+        val db = FirebaseDatabase.getInstance().getReference(DB_CHATS)
+        db.addValueEventListener(object : ValueEventListener{
+            override fun onCancelled(p0: DatabaseError) {
+
+            }
+
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                var unread = 0
+                for (snapshot in dataSnapshot.children){
+                    val chat: Chat? = snapshot.getValue(Chat::class.java)
+                    if (chat != null) {
+                        if (firebaseUser != null) {
+                            if(chat.receiver == firebaseUser.uid && !chat.isseen){
+                                unread++
+                            }
+                        }
+                    }
+                }
+
+                if (unread == 0){
+                    nav_view.menu.getItem(1).title = getString(R.string.nav_chat_text)
+                } else {
+                    nav_view.menu.getItem(1).title = getString(R.string.nav_chat_text) + " (" + unread +")"
+                }
+            }
+
+        })
+
     }
 
     override fun onBackPressed() {
@@ -86,14 +119,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         when (item.itemId) {
             R.id.nav_users -> {
-                supportActionBar?.title = getString(R.string.nav_users_text)
                 supportFragmentManager.beginTransaction().replace(
                     R.id.fragment_container,
                     UsersFragment()
                 ).commit()
             }
             R.id.nav_chat -> {
-                supportActionBar?.title = getString(R.string.nav_chat_text)
                 supportFragmentManager.beginTransaction().replace(
                     R.id.fragment_container,
                     ChatFragment()
@@ -110,7 +141,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 val profileFragment = ProfileFragment()
                 profileFragment.arguments = bundle
 
-                supportActionBar?.title = getString(R.string.nav_profile_text)
                 supportFragmentManager.beginTransaction().replace(
                     R.id.fragment_container,
                     profileFragment
@@ -163,6 +193,13 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), STORAGE_PERMISSION_CODE
             )
         }
+    }
+
+    private fun currentUserChat(userId: String){
+        val editor: SharedPreferences.Editor = getSharedPreferences("PREFS", Context.MODE_PRIVATE).edit()
+        editor.putString("currentuser", userId)
+        editor.apply()
+
     }
 
     private fun checkForStoragePermission(): Boolean {
@@ -219,12 +256,16 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     override fun onResume() {
         super.onResume()
         status(USER_ONLINE_STATUS)
+        if (firebaseUser != null) {
+            currentUserChat(firebaseUser.uid)
+        }
     }
 
     override fun onPause() {
         super.onPause()
         if (FirebaseAuth.getInstance().currentUser != null) {
             status(USER_OFFLINE_STATUS)
+            currentUserChat("none")
         }
     }
 }

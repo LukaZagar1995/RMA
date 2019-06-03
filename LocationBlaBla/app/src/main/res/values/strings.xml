@@ -57,5 +57,7 @@
     <string name="premission_granted_text">Permission GRANTED</string>
     <string name="permission_denied">Permission DENIED</string>
 	<string name="last_message_empty">No messages</string>
+    <string name="msg_token_fmt"/>
+    <string name="nav_chat_text_message"/>
 
 </resources>
