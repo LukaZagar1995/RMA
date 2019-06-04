@@ -28,7 +28,7 @@ class LoginActivity : AppCompatActivity() {
         }
 
         btn_login_login.setOnClickListener {
-            if (checkForLocationPermisssion()) {
+            if (checkForLocationPermission()) {
                 login()
             } else {
                 requestLocationPermission()
@@ -88,7 +88,7 @@ class LoginActivity : AppCompatActivity() {
 
     }
 
-    private fun checkForLocationPermisssion(): Boolean {
+    private fun checkForLocationPermission(): Boolean {
         return ContextCompat.checkSelfPermission(
             this,
             Manifest.permission.ACCESS_FINE_LOCATION

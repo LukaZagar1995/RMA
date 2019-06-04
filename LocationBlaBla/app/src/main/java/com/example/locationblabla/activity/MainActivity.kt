@@ -57,6 +57,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        if (checkForLocationPermission())
         getUserLocation()
         setupUI(this)
 
@@ -221,9 +222,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         return ContextCompat.checkSelfPermission(
             this,
             Manifest.permission.READ_EXTERNAL_STORAGE
-        ) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
         ) == PackageManager.PERMISSION_GRANTED
 
     }
@@ -298,6 +296,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     override fun onResume() {
         super.onResume()
         status(USER_ONLINE_STATUS)
+        if(checkForLocationPermission())
         getUserLocation()
         if (firebaseUser != null) {
             currentUserChat(firebaseUser.uid)
@@ -317,5 +316,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             locationManager.removeUpdates(locationListener)
             currentUserChat("none")
         }
+    }
+
+    private fun checkForLocationPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
     }
 }

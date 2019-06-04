@@ -88,8 +88,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         googleMap = map!!
         val zoomLocation = LatLng(45.55111, 18.69389)
         val hashMapMarker = HashMap<String, Marker?>()
+        val user = User()
         val usersLocations = FirebaseDatabase.getInstance().getReference(DB_USERS)
-        /* val db =
+         val db =
             FirebaseDatabase.getInstance().getReference(DB_USERS).child(FirebaseAuth.getInstance().currentUser!!.uid)
 
         db.addValueEventListener(object : ValueEventListener {
@@ -108,7 +109,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
             }
 
-        })*/
+        })
 
 
         usersLocations.addValueEventListener(object : ValueEventListener {
@@ -124,6 +125,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     val latitudeUser = databaseUser.lat
                     val longitudeUser = databaseUser.lng
                     if (databaseUser.lat != 0.0 && databaseUser.lng != 0.0) {
+                        if(isUserWithinDistanceRange(user, databaseUser)) {
                             val latLng = LatLng(latitudeUser, longitudeUser)
                             if (hashMapMarker[databaseUser.id] != null) {
                                 hashMapMarker[databaseUser.id]!!.remove()
@@ -133,6 +135,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                                 hashMapMarker[databaseUser.id] =
                                     googleMap.addMarker(MarkerOptions().position(latLng).title(databaseUser.username))
 
+                            }
                         }
                     }
                 }
@@ -149,12 +152,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     }
 
-   /* private fun isUserWithinDistanceRange(currentUser: User?, user: User?): Boolean {
+    private fun isUserWithinDistanceRange(currentUser: User?, user: User?): Boolean {
 
         val radius = 6371
 
-        val latDistance = deg2rad(user!!.lat-currentUser!!.lat)
-        val longDistance = deg2rad(user.lng-currentUser.lng)
+        val latDistance = deg2rad(Math.abs(user!!.lat-currentUser!!.lat))
+        val longDistance = deg2rad(Math.abs(user.lng-currentUser.lng))
         val a =
             Math.sin(latDistance/2) * Math.sin(latDistance/2) +
                     Math.cos(deg2rad(currentUser.lng)) * Math.cos(deg2rad(user.lat)) *
@@ -172,5 +175,5 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private fun deg2rad(deg:Double):Double {
         return deg * (Math.PI/180)
     }
-    */
+
 }
