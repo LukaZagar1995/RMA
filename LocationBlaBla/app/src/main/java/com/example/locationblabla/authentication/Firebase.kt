@@ -33,11 +33,14 @@ class Firebase {
 
                     db = FirebaseDatabase.getInstance().getReference(DB_USERS).child(userID)
 
-                    val hashMap = HashMap<String, String>()
+                    val hashMap = HashMap<String, Any>()
                     hashMap["id"] = userID
                     hashMap["username"] = user.username
                     hashMap["email"] = user.email
                     hashMap["profileImage"] = user.profileImage
+                    hashMap["lat"] = user.lat
+                    hashMap["lng"] = user.lng
+                    hashMap["distance"] = user.distance
                     hashMap["status"] = "offline"
 
                     db.setValue(hashMap).addOnCompleteListener { task ->

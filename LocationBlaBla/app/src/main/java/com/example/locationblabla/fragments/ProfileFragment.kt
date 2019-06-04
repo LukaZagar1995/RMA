@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.view.LayoutInflater
 import android.view.View
 import android.webkit.MimeTypeMap
+import android.widget.SeekBar
 import android.widget.TextView
 import com.example.locationblabla.Constants.DB_USERS
 import com.example.locationblabla.Constants.STORAGE_UPLOADS
@@ -52,9 +53,11 @@ class ProfileFragment : Fragment() {
         val firebaseUser = FirebaseAuth.getInstance().currentUser
         val db = FirebaseDatabase.getInstance().getReference(DB_USERS).child(firebaseUser!!.uid)
         val imageReference = FirebaseStorage.getInstance()
+        val tvFrgDistance: TextView = view.findViewById(R.id.tv_frg_distance)
+        val sbFrgDistance: SeekBar = view.findViewById(R.id.sb_frg_distance)
         val civFrgProfileImage: CircleImageView = view.findViewById(R.id.civ_frg_profile_image)
         val tvFrgProfileUsername: TextView = view.findViewById(R.id.tv_frg_profile_username)
-
+        var distance = 0
         val permission = arguments?.get(PERMISSION)
 
         db.addValueEventListener(object : ValueEventListener {
@@ -65,6 +68,7 @@ class ProfileFragment : Fragment() {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 val user: User? = dataSnapshot.getValue(User::class.java)
                 if (user != null) {
+                    sbFrgDistance.progress = user.distance
                     tvFrgProfileUsername.text = user.username
                     if (user.profileImage == USER_DEFAULT_IMAGE) {
                         civFrgProfileImage.setImageResource(R.mipmap.ic_launcher)
@@ -77,12 +81,35 @@ class ProfileFragment : Fragment() {
                 }
             }
         })
-        if (permission == true){
-        civFrgProfileImage.setOnClickListener {
+        if (permission == true) {
+            civFrgProfileImage.setOnClickListener {
 
                 openImage()
             }
         }
+
+        sbFrgDistance.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                distance = progress
+                tvFrgDistance.text = getString(R.string.tv_frg_distance_text) + " " + progress + " km"
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                val hashMap = HashMap<String, Any>()
+                if (distance == 0){
+                    hashMap["distance"] = 1
+                } else {
+                    hashMap["distance"] = distance
+                }
+
+                db.updateChildren(hashMap)
+            }
+
+        })
 
         return view
     }
@@ -149,11 +176,12 @@ class ProfileFragment : Fragment() {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == IMAGE_REQUEST && resultCode == RESULT_OK
-            && data != null && data.data != null){
+            && data != null && data.data != null
+        ) {
             imageUri = data.data!!
 
-            if (storageTask != null){
-                if(storageTask!!.isInProgress){
+            if (storageTask != null) {
+                if (storageTask!!.isInProgress) {
                     Toast.makeText(context, getString(R.string.upload_image_info), Toast.LENGTH_SHORT).show()
                 }
             } else {

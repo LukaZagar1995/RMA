@@ -11,8 +11,6 @@ import com.example.locationblabla.Constants.DB_USERS
 import com.example.locationblabla.R
 import com.example.locationblabla.model.User
 import UserAdapter
-import android.annotation.SuppressLint
-import android.widget.Toast
 import com.example.locationblabla.Constants.DB_CHAT_LIST
 import com.example.locationblabla.Constants.DB_TOKEN
 import com.example.locationblabla.model.Chatlist
@@ -32,7 +30,6 @@ class ChatFragment : Fragment() {
     val usersList = ArrayList<User>()
     val userChatList = ArrayList<Chatlist>()
 
-    @SuppressLint("StringFormatInvalid")
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
         val view = inflater.inflate(R.layout.fragment_chat, container, false)

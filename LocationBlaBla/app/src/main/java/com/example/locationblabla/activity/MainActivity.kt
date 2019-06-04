@@ -1,6 +1,7 @@
 package com.example.locationblabla.activity
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Context
 import android.support.v7.app.AppCompatActivity
@@ -13,6 +14,9 @@ import kotlinx.android.synthetic.main.activity_main.*
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
 import android.support.design.widget.NavigationView
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
@@ -31,6 +35,7 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.example.locationblabla.fragments.ProfileFragment
 import com.example.locationblabla.fragments.ChatFragment
+import com.example.locationblabla.fragments.MapFragment
 import com.example.locationblabla.fragments.UsersFragment
 import com.example.locationblabla.model.Chat
 import com.example.locationblabla.module.GlideApp
@@ -46,11 +51,13 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     private val firebaseUser = FirebaseAuth.getInstance().currentUser
+    private lateinit var locationListener: LocationListener
+    private lateinit var locationManager: LocationManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
+        getUserLocation()
         setupUI(this)
 
         if (savedInstanceState == null) {
@@ -78,28 +85,28 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
 
         val db = FirebaseDatabase.getInstance().getReference(DB_CHATS)
-        db.addValueEventListener(object : ValueEventListener{
+        db.addValueEventListener(object : ValueEventListener {
             override fun onCancelled(p0: DatabaseError) {
 
             }
 
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 var unread = 0
-                for (snapshot in dataSnapshot.children){
+                for (snapshot in dataSnapshot.children) {
                     val chat: Chat? = snapshot.getValue(Chat::class.java)
                     if (chat != null) {
                         if (firebaseUser != null) {
-                            if(chat.receiver == firebaseUser.uid && !chat.isseen){
+                            if (chat.receiver == firebaseUser.uid && !chat.isseen) {
                                 unread++
                             }
                         }
                     }
                 }
 
-                if (unread == 0){
+                if (unread == 0) {
                     nav_view.menu.getItem(1).title = getString(R.string.nav_chat_text)
                 } else {
-                    nav_view.menu.getItem(1).title = getString(R.string.nav_chat_text) + " (" + unread +")"
+                    nav_view.menu.getItem(1).title = getString(R.string.nav_chat_text) + " (" + unread + ")"
                 }
             }
 
@@ -146,6 +153,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     profileFragment
                 ).commit()
             }
+
+            R.id.nav_map -> {
+                supportFragmentManager.beginTransaction().replace(
+                    R.id.fragment_container,
+                    MapFragment()
+                ).commit()
+            }
+
             R.id.nav_logout -> {
                 status(USER_OFFLINE_STATUS)
                 FirebaseAuth.getInstance().signOut()
@@ -165,7 +180,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         return true
     }
 
-    private fun requestStoragePermission()  {
+    private fun requestStoragePermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(
                 this,
                 Manifest.permission.READ_EXTERNAL_STORAGE
@@ -195,7 +210,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
     }
 
-    private fun currentUserChat(userId: String){
+    private fun currentUserChat(userId: String) {
         val editor: SharedPreferences.Editor = getSharedPreferences("PREFS", Context.MODE_PRIVATE).edit()
         editor.putString("currentuser", userId)
         editor.apply()
@@ -243,6 +258,33 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     }
 
+    @SuppressLint("MissingPermission")
+    private fun getUserLocation(){
+        locationManager = ContextCompat.getSystemService(this, LocationManager::class.java)!!
+        locationListener = object : LocationListener {
+            override fun onLocationChanged(location: Location) {
+
+
+
+            }
+
+            override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {
+
+            }
+
+            override fun onProviderEnabled(provider: String) {
+
+            }
+
+            override fun onProviderDisabled(provider: String) {
+
+            }
+
+        }
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000, 100.0F, locationListener)
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 100.0F, locationListener)
+    }
+
     private fun status(status: String) {
         val db =
             FirebaseDatabase.getInstance().getReference(DB_USERS).child(FirebaseAuth.getInstance().currentUser!!.uid)
@@ -256,6 +298,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     override fun onResume() {
         super.onResume()
         status(USER_ONLINE_STATUS)
+        getUserLocation()
         if (firebaseUser != null) {
             currentUserChat(firebaseUser.uid)
         }
@@ -265,6 +308,13 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         super.onPause()
         if (FirebaseAuth.getInstance().currentUser != null) {
             status(USER_OFFLINE_STATUS)
+            val db =
+                FirebaseDatabase.getInstance().getReference(DB_USERS).child(FirebaseAuth.getInstance().currentUser!!.uid)
+            val hashMap = HashMap<String, Any>()
+            hashMap["lat"] = 0.0
+            hashMap["lng"] = 0.0
+            db.updateChildren(hashMap)
+            locationManager.removeUpdates(locationListener)
             currentUserChat("none")
         }
     }

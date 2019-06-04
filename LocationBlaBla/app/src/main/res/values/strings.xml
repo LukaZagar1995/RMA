@@ -59,5 +59,7 @@
 	<string name="last_message_empty">No messages</string>
     <string name="msg_token_fmt"/>
     <string name="nav_chat_text_message"/>
+    <string name="nav_map">Map</string>
+	<string name="tv_frg_distance_text">Distance</string>
 
 </resources>

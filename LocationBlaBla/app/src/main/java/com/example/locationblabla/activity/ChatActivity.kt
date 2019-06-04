@@ -135,7 +135,7 @@ class ChatActivity : AppCompatActivity() {
         hashMap["sender"] = sender
         hashMap["receiver"] = receiver
         hashMap["message"] = message
-        hashMap["isSeen"] = false
+        hashMap["isseen"] = false
 
         val userID =intent.getStringExtra(USER_ID)
 
