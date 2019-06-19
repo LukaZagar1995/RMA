@@ -90,6 +90,7 @@ class ProfileFragment : Fragment() {
 
         sbFrgDistance.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                tvFrgDistance.text = ""
                 distance = progress
                 tvFrgDistance.text = getString(R.string.tv_frg_distance_text) + " " + progress + " km"
             }

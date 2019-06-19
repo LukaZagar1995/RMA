@@ -17,6 +17,7 @@ import android.location.LocationManager
 import android.support.v4.content.ContextCompat.getSystemService
 import android.widget.Toast
 import com.example.locationblabla.Constants.DB_USERS
+import com.example.locationblabla.Helper
 import com.example.locationblabla.model.User
 import com.google.android.gms.maps.model.Marker
 import com.google.firebase.auth.FirebaseAuth
@@ -51,12 +52,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         locationManager = getSystemService(context!!, LocationManager::class.java)!!
         locationListener = object : LocationListener {
             override fun onLocationChanged(location: Location) {
-                val latitude = location.latitude as Double
-                val longitude = location.longitude as Double
+                val latitude = location.latitude
+                val longitude = location.longitude
                 val db = FirebaseDatabase.getInstance().getReference(DB_USERS).child(firebaseUser!!.uid)
                 val hashMap = HashMap<String, Any>()
-                hashMap["lat"] = latitude as Double
-                hashMap["lng"] = longitude as Double
+                hashMap["lat"] = latitude
+                hashMap["lng"] = longitude
                 db.updateChildren(hashMap)
 
             }
@@ -111,7 +112,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
         })
 
-
+        val helper = Helper()
         usersLocations.addValueEventListener(object : ValueEventListener {
 
             override fun onCancelled(p0: DatabaseError) {
@@ -125,7 +126,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     val latitudeUser = databaseUser.lat
                     val longitudeUser = databaseUser.lng
                     if (databaseUser.lat != 0.0 && databaseUser.lng != 0.0) {
-                        if(isUserWithinDistanceRange(user, databaseUser)) {
+                        if(helper.isUserWithinDistanceRange(user, databaseUser)) {
                             val latLng = LatLng(latitudeUser, longitudeUser)
                             if (hashMapMarker[databaseUser.id] != null) {
                                 hashMapMarker[databaseUser.id]!!.remove()
@@ -150,30 +151,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         super.onStop()
         locationManager.removeUpdates(locationListener)
 
-    }
-
-    private fun isUserWithinDistanceRange(currentUser: User?, user: User?): Boolean {
-
-        val radius = 6371
-
-        val latDistance = deg2rad(Math.abs(user!!.lat-currentUser!!.lat))
-        val longDistance = deg2rad(Math.abs(user.lng-currentUser.lng))
-        val a =
-            Math.sin(latDistance/2) * Math.sin(latDistance/2) +
-                    Math.cos(deg2rad(currentUser.lng)) * Math.cos(deg2rad(user.lat)) *
-                    Math.sin(longDistance/2) * Math.sin(longDistance/2)
-        ;
-        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
-        val d = radius * c
-
-
-
-        return d <= currentUser.distance
-
-    }
-
-    private fun deg2rad(deg:Double):Double {
-        return deg * (Math.PI/180)
     }
 
 }
